@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>한국인 인생 난이도 판독기</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+
+:root{
+  --bg:#09090b;
+  --card:#111113;
+  --border:#222226;
+  --text:#f4f4f5;
+  --muted:#71717a;
+  --easy:#22c55e;
+  --hard:#ef4444;
+  --mid:#f59e0b;
+}
+
+body{
+  font-family:'Noto Sans KR',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:24px 16px 60px;
+}
+
+/* ── INTRO ── */
+#intro{text-align:center;max-width:480px;padding-top:40px;}
+.intro-icon{font-size:3.5rem;margin-bottom:16px;display:block;}
+.intro-title{
+  font-size:1.7rem;font-weight:900;letter-spacing:-1px;
+  margin-bottom:8px;line-height:1.2;
+}
+.intro-title em{
+  font-style:normal;
+  background:linear-gradient(90deg,#ef4444,#f59e0b);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.intro-sub{font-size:0.8rem;color:var(--muted);line-height:1.7;margin-bottom:28px;}
+.start-btn{
+  background:#f4f4f5;color:#09090b;
+  border:none;border-radius:10px;
+  font-family:'Noto Sans KR',sans-serif;
+  font-size:1rem;font-weight:700;
+  padding:14px 40px;cursor:pointer;
+  transition:transform .15s,box-shadow .15s;
+}
+.start-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(255,255,255,.1);}
+
+/* ── QUIZ ── */
+#quiz{display:none;width:100%;max-width:520px;}
+
+.progress-wrap{margin-bottom:28px;}
+.progress-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.progress-label{font-size:0.7rem;color:var(--muted);font-weight:700;letter-spacing:1px;}
+.progress-count{font-size:0.7rem;color:var(--muted);}
+.progress-bar-bg{
+  width:100%;height:4px;background:var(--border);border-radius:2px;overflow:hidden;
+}
+.progress-bar-fill{
+  height:100%;border-radius:2px;
+  background:linear-gradient(90deg,#ef4444,#f59e0b);
+  transition:width .4s ease;
+}
+
+.category-badge{
+  display:inline-block;padding:3px 10px;border-radius:20px;
+  font-size:0.62rem;font-weight:700;margin-bottom:10px;
+  background:#1c1c1e;border:1px solid var(--border);color:var(--muted);
+}
+
+.question-num{font-size:0.65rem;color:var(--muted);margin-bottom:6px;}
+.question-text{
+  font-size:1.05rem;font-weight:700;line-height:1.5;
+  margin-bottom:20px;
+}
+
+.options{display:flex;flex-direction:column;gap:8px;}
+
+.opt-btn{
+  background:var(--card);
+  border:1.5px solid var(--border);
+  border-radius:10px;
+  color:var(--text);
+  font-family:'Noto Sans KR',sans-serif;
+  font-size:0.82rem;
+  padding:13px 16px;
+  text-align:left;
+  cursor:pointer;
+  transition:all .15s;
+  line-height:1.4;
+  display:flex;align-items:flex-start;gap:10px;
+}
+.opt-btn .opt-letter{
+  width:22px;height:22px;border-radius:6px;
+  background:var(--border);color:var(--muted);
+  font-size:0.65rem;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  margin-top:1px;
+}
+.opt-btn:hover{border-color:#f59e0b;background:#1a1700;}
+.opt-btn:hover .opt-letter{background:#f59e0b;color:#000;}
+.opt-btn.selected{border-color:#22c55e;background:#001a0a;}
+.opt-btn.selected .opt-letter{background:#22c55e;color:#000;}
+
+/* ── LOADING ── */
+#loading{
+  display:none;text-align:center;padding-top:80px;
+}
+.loading-icon{font-size:3rem;animation:spin 1s linear infinite;display:block;margin-bottom:16px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{font-size:0.85rem;color:var(--muted);}
+
+/* ── RESULT ── */
+#result{display:none;width:100%;max-width:520px;}
+
+.result-header{text-align:center;padding:32px 0 24px;}
+.result-badge{
+  display:inline-block;padding:4px 14px;border-radius:20px;
+  font-size:0.65rem;font-weight:700;letter-spacing:2px;
+  margin-bottom:14px;
+}
+.result-type-name{
+  font-size:2rem;font-weight:900;letter-spacing:-1px;
+  margin-bottom:6px;line-height:1.1;
+}
+.result-type-sub{font-size:0.8rem;color:var(--muted);margin-bottom:20px;}
+
+/* difficulty meter */
+.diff-meter{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:20px;margin-bottom:12px;
+  text-align:center;
+}
+.diff-label{font-size:0.65rem;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:10px;}
+.diff-score-wrap{position:relative;margin-bottom:10px;}
+.diff-score-big{font-size:3.5rem;font-weight:900;line-height:1;}
+.diff-score-max{font-size:0.8rem;color:var(--muted);}
+.diff-bar-bg{
+  width:100%;height:10px;background:var(--border);border-radius:5px;
+  overflow:hidden;margin-bottom:8px;
+}
+.diff-bar-fill{height:100%;border-radius:5px;transition:width 1s ease;}
+.diff-grade{font-size:1.1rem;font-weight:700;}
+
+/* breakdown */
+.breakdown{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;
+}
+.bk-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:10px;padding:12px;
+}
+.bk-cat{font-size:0.6rem;color:var(--muted);font-weight:700;margin-bottom:4px;}
+.bk-score{font-size:1.1rem;font-weight:700;}
+.bk-bar{height:4px;border-radius:2px;margin-top:6px;transition:width 1s ease;}
+
+/* desc card */
+.desc-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:18px;margin-bottom:12px;
+}
+.desc-card h3{font-size:0.7rem;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:10px;}
+.desc-text{font-size:0.82rem;line-height:1.8;color:#d4d4d8;}
+
+/* famous */
+.famous-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:18px;margin-bottom:20px;
+}
+.famous-card h3{font-size:0.7rem;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:10px;}
+.famous-list{display:flex;flex-direction:column;gap:6px;}
+.famous-item{
+  display:flex;align-items:center;gap:10px;
+  font-size:0.78rem;padding:8px;border-radius:8px;background:#0a0a0b;
+}
+.famous-emoji{font-size:1.1rem;}
+.famous-name{font-weight:700;}
+.famous-desc{font-size:0.65rem;color:var(--muted);}
+
+.share-btn{
+  width:100%;padding:14px;border-radius:10px;border:none;
+  font-family:'Noto Sans KR',sans-serif;font-size:0.9rem;font-weight:700;
+  cursor:pointer;background:#f4f4f5;color:#09090b;
+  margin-bottom:8px;transition:transform .15s;
+}
+.share-btn:hover{transform:translateY(-1px);}
+.retry-btn{
+  width:100%;padding:12px;border-radius:10px;
+  border:1.5px solid var(--border);background:transparent;
+  color:var(--muted);font-family:'Noto Sans KR',sans-serif;
+  font-size:0.85rem;cursor:pointer;
+}
+.retry-btn:hover{border-color:var(--text);color:var(--text);}
+</style>
+</head>
+<body>
+
+<!-- INTRO -->
+<div id="intro">
+  <span class="intro-icon">🎰</span>
+  <h1 class="intro-title">한국인<br><em>인생 난이도</em> 판독기</h1>
+  <p class="intro-sub">
+    30가지 질문으로 당신의 한국 인생이<br>
+    얼마나 어려운 난이도인지 측정합니다.<br>
+    솔직하게 답할수록 정확합니다.
+  </p>
+  <button class="start-btn" onclick="startQuiz()">판독 시작하기 →</button>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz">
+  <div class="progress-wrap">
+    <div class="progress-top">
+      <span class="progress-label">LIFE DIFFICULTY TEST</span>
+      <span class="progress-count" id="prog-count">1 / 30</span>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="prog-fill" style="width:3%"></div>
+    </div>
+  </div>
+  <div class="category-badge" id="q-category">출생환경</div>
+  <div class="question-num" id="q-num">Q1</div>
+  <div class="question-text" id="q-text"></div>
+  <div class="options" id="q-options"></div>
+</div>
+
+<!-- LOADING -->
+<div id="loading">
+  <span class="loading-icon">⚙️</span>
+  <div class="loading-text">인생 난이도를 계산하는 중...</div>
+</div>
+
+<!-- RESULT -->
+<div id="result"></div>
+
+<script>
+// ── QUESTIONS (30개) ────────────────────────────────────────────
+// score: 높을수록 난이도 높음 (0~10)
+// category: 출생/교육/경제/사회/직업/주거/관계/멘탈
+
+const QUESTIONS = [
+  // 출생환경 (1-6)
+  {
+    cat:'👶 출생환경', text:'부모님의 경제적 수준은?',
+    opts:[
+      {t:'재산이 수십억 이상, 사업체 보유', s:0},
+      {t:'연봉 1억+ 전문직 (의사·변호사·교수)', s:2},
+      {t:'평범한 직장인, 아파트 한 채', s:5},
+      {t:'빠듯한 살림, 월세·전세 생활', s:8},
+      {t:'기초생활수급·차상위계층', s:10},
+    ]
+  },
+  {
+    cat:'👶 출생환경', text:'태어난 지역은?',
+    opts:[
+      {t:'서울 강남3구 (강남·서초·송파)', s:0},
+      {t:'서울 기타 지역', s:2},
+      {t:'수도권 (경기·인천)', s:4},
+      {t:'지방 광역시 (부산·대구·광주 등)', s:6},
+      {t:'지방 중소도시·농어촌', s:9},
+    ]
+  },
+  {
+    cat:'👶 출생환경', text:'외모에 대한 솔직한 평가는?',
+    opts:[
+      {t:'어딜 가든 예쁘다·잘생겼다는 말 듣는다', s:0},
+      {t:'평균 이상이라는 말을 자주 듣는다', s:3},
+      {t:'그냥 평범한 외모', s:5},
+      {t:'외모로 불이익을 받은 적 있다', s:8},
+      {t:'외모 콤플렉스가 삶에 큰 영향을 준다', s:10},
+    ]
+  },
+  {
+    cat:'👶 출생환경', text:'부모님의 교육 수준은?',
+    opts:[
+      {t:'부모 둘 다 대졸 이상, 교육열 높음', s:1},
+      {t:'한 명은 대졸, 교육에 관심 있음', s:3},
+      {t:'고졸이지만 자녀 교육에 적극적', s:5},
+      {t:'교육에 무관심하거나 지원 어려움', s:8},
+      {t:'부모 부재 (이혼·사망·방치)', s:10},
+    ]
+  },
+  {
+    cat:'👶 출생환경', text:'형제·자매는 몇 명?',
+    opts:[
+      {t:'외동 (모든 자원이 나에게 집중)', s:1},
+      {t:'1명 (2남매)', s:3},
+      {t:'2명 (3남매)', s:5},
+      {t:'3명 이상', s:7},
+      {t:'5명 이상 다자녀', s:9},
+    ]
+  },
+  {
+    cat:'👶 출생환경', text:'성별은?',
+    opts:[
+      {t:'남성', s:4},
+      {t:'여성', s:6},
+      {t:'기타', s:8},
+    ]
+  },
+  // 교육 (7-11)
+  {
+    cat:'📚 교육', text:'다닌 초·중·고등학교 수준은?',
+    opts:[
+      {t:'강남권 8학군 또는 유명 사립학교', s:0},
+      {t:'서울·수도권 일반 공립학교', s:3},
+      {t:'지방 일반 학교', s:5},
+      {t:'학교 환경이 열악했다', s:8},
+      {t:'학교를 제대로 못 다녔다', s:10},
+    ]
+  },
+  {
+    cat:'📚 교육', text:'사교육(학원·과외)을 얼마나 받았나?',
+    opts:[
+      {t:'과목별 1:1 과외에 월 300만원 이상', s:0},
+      {t:'여러 학원을 꾸준히 다녔다', s:2},
+      {t:'한두 개 학원만 다녔다', s:5},
+      {t:'거의 받지 못했다', s:8},
+      {t:'사교육은 꿈도 못 꿨다', s:10},
+    ]
+  },
+  {
+    cat:'📚 교육', text:'수능 성적은 어느 정도였나?',
+    opts:[
+      {t:'1~2등급 (SKY 지원 가능)', s:0},
+      {t:'3~4등급 (인서울 가능)', s:3},
+      {t:'5~6등급 (지방 4년제)', s:6},
+      {t:'7등급 이하 또는 전문대', s:8},
+      {t:'수능을 보지 않았다', s:7},
+    ]
+  },
+  {
+    cat:'📚 교육', text:'졸업한 대학교는?',
+    opts:[
+      {t:'SKY (서울·연세·고려)', s:0},
+      {t:'인서울 상위권 (성균관·한양·이화 등)', s:2},
+      {t:'인서울 일반 또는 지방 명문대', s:5},
+      {t:'지방 4년제 또는 전문대', s:7},
+      {t:'대학을 나오지 않았다', s:9},
+    ]
+  },
+  {
+    cat:'📚 교육', text:'학자금 대출이 있었나?',
+    opts:[
+      {t:'부모님이 전액 지원, 대출 없음', s:0},
+      {t:'일부 대출, 졸업 후 금방 갚았다', s:3},
+      {t:'대출이 있었고 갚는 데 수년 걸렸다', s:7},
+      {t:'대출이 많아 사회생활 시작부터 빚', s:9},
+    ]
+  },
+  // 경제 (12-16)
+  {
+    cat:'💰 경제', text:'첫 직장 연봉은?',
+    opts:[
+      {t:'5000만원 이상', s:0},
+      {t:'3000~5000만원', s:3},
+      {t:'2000~3000만원', s:6},
+      {t:'2000만원 미만 (최저시급 수준)', s:9},
+      {t:'첫 직장을 구하는 데 1년 이상 걸렸다', s:10},
+    ]
+  },
+  {
+    cat:'💰 경제', text:'현재 또는 최근 자산 수준은?',
+    opts:[
+      {t:'부동산 포함 10억 이상', s:0},
+      {t:'3~10억 (내 집 있음)', s:2},
+      {t:'1~3억 (전세 또는 적금)', s:5},
+      {t:'1억 미만, 월세 생활', s:8},
+      {t:'빚이 더 많다', s:10},
+    ]
+  },
+  {
+    cat:'💰 경제', text:'부모님에게 경제적 지원을 받은 적 있나?',
+    opts:[
+      {t:'집 사줄 때 현금 증여 받았다', s:0},
+      {t:'취업·결혼 자금 일부 지원받았다', s:2},
+      {t:'급할 때 빌려주신 정도', s:5},
+      {t:'오히려 내가 부모님을 지원한다', s:9},
+      {t:'부모님께 경제적 빚이 있다', s:10},
+    ]
+  },
+  {
+    cat:'💰 경제', text:'소비 패턴은?',
+    opts:[
+      {t:'하고 싶은 거 다 하면서도 저축함', s:0},
+      {t:'아끼긴 하지만 여유 있게 삶', s:3},
+      {t:'빠듯하지만 그럭저럭 살아감', s:6},
+      {t:'월말이 되면 통장이 텅 빈다', s:9},
+      {t:'카드값이 무서워서 명세서를 못 본다', s:10},
+    ]
+  },
+  {
+    cat:'💰 경제', text:'내 집이 있나?',
+    opts:[
+      {t:'강남·마포·용산 등 핵심지 아파트', s:0},
+      {t:'서울·수도권 아파트 보유', s:2},
+      {t:'지방 아파트 또는 빌라 보유', s:5},
+      {t:'전세로 살고 있다', s:7},
+      {t:'월세, 내 집은 꿈도 못 꾼다', s:10},
+    ]
+  },
+  // 직업 (17-20)
+  {
+    cat:'💼 직업', text:'현재 직업은?',
+    opts:[
+      {t:'의사·변호사·판사·교수 등 전문직', s:0},
+      {t:'대기업·공기업·금융권 정규직', s:2},
+      {t:'중소기업 정규직', s:5},
+      {t:'비정규직·계약직·아르바이트', s:8},
+      {t:'무직 또는 구직 중', s:10},
+    ]
+  },
+  {
+    cat:'💼 직업', text:'직장 내 스트레스 수준은?',
+    opts:[
+      {t:'업무량 적고 분위기 좋다', s:0},
+      {t:'바쁘지만 보람 있다', s:3},
+      {t:'야근이 잦고 상사가 힘들다', s:7},
+      {t:'번아웃 직전이다', s:9},
+      {t:'직장 때문에 건강이 망가졌다', s:10},
+    ]
+  },
+  {
+    cat:'💼 직업', text:'워라밸(일·삶 균형)은?',
+    opts:[
+      {t:'칼퇴, 주말은 온전히 내 것', s:0},
+      {t:'가끔 야근하지만 감당 가능', s:3},
+      {t:'주말에도 업무 연락이 온다', s:7},
+      {t:'주 6일 이상 일한다', s:9},
+      {t:'내 생활이 없다', s:10},
+    ]
+  },
+  {
+    cat:'💼 직업', text:'직업 안정성은?',
+    opts:[
+      {t:'공무원·교사 등 종신 고용', s:0},
+      {t:'대기업 정규직, 안정적', s:2},
+      {t:'중소기업, 언제 잘릴지 모른다', s:6},
+      {t:'프리랜서·자영업, 수입이 불안정', s:8},
+      {t:'실직·폐업을 경험했다', s:10},
+    ]
+  },
+  // 주거 (21-23)
+  {
+    cat:'🏠 주거', text:'지금 사는 곳은?',
+    opts:[
+      {t:'강남권 30평대 이상 아파트', s:0},
+      {t:'서울 일반 아파트', s:2},
+      {t:'수도권 아파트 또는 서울 빌라·오피스텔', s:5},
+      {t:'지방 또는 고시원·쪽방', s:8},
+      {t:'주거 불안정 상태', s:10},
+    ]
+  },
+  {
+    cat:'🏠 주거', text:'주거비 부담은?',
+    opts:[
+      {t:'내 집이라 주거비 거의 없다', s:0},
+      {t:'부모님과 함께 산다', s:2},
+      {t:'전세로 부담이 크지 않다', s:4},
+      {t:'월세가 월급의 30% 이상', s:8},
+      {t:'월세가 월급의 절반 이상', s:10},
+    ]
+  },
+  {
+    cat:'🏠 주거', text:'주거 관련 트라우마가 있나?',
+    opts:[
+      {t:'없다, 주거 걱정 해본 적 없다', s:0},
+      {t:'이사가 잦았지만 큰 문제 없었다', s:3},
+      {t:'전세 사기·보증금 날린 경험 있다', s:9},
+      {t:'강제 퇴거·노숙 경험 있다', s:10},
+    ]
+  },
+  // 관계 (24-27)
+  {
+    cat:'❤️ 관계', text:'결혼·연애 상황은?',
+    opts:[
+      {t:'좋은 파트너와 행복하게 살고 있다', s:0},
+      {t:'연애 중, 관계가 안정적', s:2},
+      {t:'솔로, 자발적으로 선택', s:4},
+      {t:'이혼·사별·이별로 힘들었다', s:8},
+      {t:'관계 트라우마가 있다', s:10},
+    ]
+  },
+  {
+    cat:'❤️ 관계', text:'주변 인맥(네트워크)은?',
+    opts:[
+      {t:'사회적 자본이 풍부, 든든한 인맥', s:0},
+      {t:'필요할 때 도움받을 사람 있다', s:3},
+      {t:'그냥 평범한 인간관계', s:5},
+      {t:'인맥이 별로 없고 외롭다', s:8},
+      {t:'사실상 고립 상태', s:10},
+    ]
+  },
+  {
+    cat:'❤️ 관계', text:'가족 관계는?',
+    opts:[
+      {t:'화목하고 서로 든든한 버팀목', s:0},
+      {t:'평범하지만 서로 챙긴다', s:3},
+      {t:'거리가 있지만 갈등은 없다', s:5},
+      {t:'가족 때문에 경제적·정신적으로 힘들다', s:8},
+      {t:'가족이 내 삶의 가장 큰 고통이다', s:10},
+    ]
+  },
+  {
+    cat:'❤️ 관계', text:'돌봄 부담이 있나? (부모·자녀·장애 가족 등)',
+    opts:[
+      {t:'전혀 없다', s:0},
+      {t:'약간 있지만 감당 가능', s:3},
+      {t:'상당한 시간과 돈이 든다', s:7},
+      {t:'내 삶을 포기할 정도로 힘들다', s:10},
+    ]
+  },
+  // 멘탈·건강 (28-30)
+  {
+    cat:'🧠 멘탈·건강', text:'정신건강 상태는?',
+    opts:[
+      {t:'늘 긍정적이고 에너지 넘친다', s:0},
+      {t:'가끔 힘들지만 금방 회복한다', s:3},
+      {t:'우울·불안을 자주 느낀다', s:7},
+      {t:'정신건강 치료를 받고 있다', s:8},
+      {t:'일상생활이 어려울 정도로 힘들다', s:10},
+    ]
+  },
+  {
+    cat:'🧠 멘탈·건강', text:'신체 건강 상태는?',
+    opts:[
+      {t:'건강검진 늘 정상, 운동도 한다', s:0},
+      {t:'평균적인 건강, 큰 문제 없다', s:2},
+      {t:'만성질환이 하나 있다', s:6},
+      {t:'여러 질병으로 치료비 부담 있다', s:8},
+      {t:'중증 질환으로 일상이 어렵다', s:10},
+    ]
+  },
+  {
+    cat:'🧠 멘탈·건강', text:'인생에서 가장 힘든 사건을 겪은 적 있나?',
+    opts:[
+      {t:'없다, 큰 불행 없이 살아왔다', s:0},
+      {t:'있지만 잘 극복했다', s:3},
+      {t:'아직도 회복 중이다', s:7},
+      {t:'그 사건이 내 인생을 바꿔놨다', s:9},
+      {t:'여러 번의 큰 불행이 겹쳤다', s:10},
+    ]
+  },
+];
+
+// ── RESULT TYPES ────────────────────────────────────────────────
+// 점수 0~300, 6단계
+const TYPES = [
+  {
+    min:0, max:59,
+    name:'금수저\n무결점형', emoji:'💎',
+    grade:'Easy Mode', gradeColor:'#22c55e',
+    badgeColor:'#052e16', badgeText:'#22c55e',
+    sub:'한국에서 태어난 것 자체가 DLC 구매',
+    desc:'당신의 인생은 대한민국 상위 1%의 시작점에서 출발했습니다. 강남 아파트, 풍족한 사교육, 든든한 부모님의 지원. 물론 당신 나름의 고민과 압박이 있겠지만 객관적으로 인생 난이도는 최하입니다. 이 사실을 인식하고 사는 것만으로도 이미 훌륭합니다.',
+    famous:[
+      {e:'👔', name:'이재용', desc:'삼성가 3세, 경기고-서울대-게이오대'},
+      {e:'🎬', name:'정용화', desc:'부유한 가정, 빠른 데뷔'},
+      {e:'⚽', name:'손흥민', desc:'아버지의 전폭적 지원으로 성장'},
+    ]
+  },
+  {
+    min:60, max:109,
+    name:'평온한\n순항형', emoji:'⛵',
+    grade:'Normal-Easy', gradeColor:'#86efac',
+    badgeColor:'#052e16', badgeText:'#86efac',
+    sub:'파도가 있어도 배는 잘 나아간다',
+    desc:'평균 이상의 환경에서 시작해 나름의 노력으로 안정적인 궤도를 달리고 있습니다. 큰 불행 없이 표준적인 한국의 코스를 밟아왔고, 앞으로도 꾸준히 나아갈 동력이 있습니다. 감사해야 할 것들이 많은 인생입니다.',
+    famous:[
+      {e:'🎤', name:'아이유', desc:'어려운 환경 극복, 평범한 시작에서 정상'},
+      {e:'📺', name:'유재석', desc:'비서울 출신, 꾸준한 노력파'},
+      {e:'🏃', name:'김연아', desc:'부천 출신, 재능+지원의 조화'},
+    ]
+  },
+  {
+    min:110, max:159,
+    name:'보통\n한국인형', emoji:'🏙️',
+    grade:'Normal', gradeColor:'#fbbf24',
+    badgeColor:'#1c1200', badgeText:'#fbbf24',
+    sub:'대한민국 직장인의 평균적인 삶',
+    desc:'당신은 가장 전형적인 한국인의 삶을 살고 있습니다. 빠듯하지만 버틸 수 있는 월급, 오르지 않는 집값에 한숨, 야근과 회식의 반복. 힘들지만 그게 한국이고, 당신은 그 속에서 꽤 잘 버티고 있습니다.',
+    famous:[
+      {e:'💼', name:'일반 직장인', desc:'월급날만 기다리는 대한민국 보통 사람'},
+      {e:'📖', name:'공시생', desc:'안정을 꿈꾸며 오늘도 도서관에'},
+      {e:'🏠', name:'영끌족', desc:'아파트 한 채를 위해 인생을 건 사람들'},
+    ]
+  },
+  {
+    min:160, max:209,
+    name:'개천에서\n용 도전형', emoji:'🐉',
+    grade:'Hard', gradeColor:'#f97316',
+    badgeColor:'#1c0a00', badgeText:'#f97316',
+    sub:'개천에서 용 나기, 도전은 현재진행형',
+    desc:'쉽지 않은 환경에서 출발했지만 포기하지 않고 달려왔습니다. 남들이 당연하게 가진 것들을 얻기 위해 두 배 세 배 노력해야 했던 당신. 이 난이도에서 지금까지 버텨온 것 자체가 이미 대단한 성취입니다.',
+    famous:[
+      {e:'🎤', name:'BTS 방탄소년단', desc:'비주류 소기획사에서 세계 정상으로'},
+      {e:'🏋️', name:'류현진', desc:'인천 중소도시 출신, 끝없는 노력'},
+      {e:'📚', name:'흙수저 고시생', desc:'오직 실력으로 계층 이동에 도전'},
+    ]
+  },
+  {
+    min:210, max:259,
+    name:'인생\n하드코어형', emoji:'🔥',
+    grade:'Very Hard', gradeColor:'#ef4444',
+    badgeColor:'#1c0000', badgeText:'#ef4444',
+    sub:'불꽃 속에서도 꺼지지 않는 사람',
+    desc:'객관적으로 매우 힘든 환경과 조건들이 겹쳐 있습니다. 남들은 당연하게 누리는 것들조차 당신에게는 큰 도전이었을 겁니다. 하지만 이 테스트까지 할 수 있는 당신은 아직 싸울 의지가 있는 사람입니다. 그것만으로도 충분합니다.',
+    famous:[
+      {e:'💪', name:'박세리', desc:'아버지와 맨땅에서 시작, 세계 정상'},
+      {e:'✍️', name:'황석영', desc:'굴곡진 한국 현대사 속 생존'},
+      {e:'🌱', name:'이태석 신부', desc:'가난한 환경에서 타인을 위해 헌신'},
+    ]
+  },
+  {
+    min:260, max:300,
+    name:'인생\n지옥난이도형', emoji:'💀',
+    grade:'Hell Mode', gradeColor:'#7f1d1d',
+    badgeColor:'#0a0000', badgeText:'#ff6b6b',
+    sub:'살아있다는 것 자체가 기적인 사람',
+    desc:'당신이 지금까지 살아온 것 자체가 기적에 가깝습니다. 이 정도의 무게를 짊어지고 여기까지 왔다는 사실이 놀랍습니다. 지금 많이 지쳐있을 수 있습니다. 잠깐 쉬어가도 괜찮습니다. 당신의 고통은 결코 과장이 아닙니다.',
+    famous:[
+      {e:'🕊️', name:'전태일', desc:'노동자의 권리를 위해 싸운 청년'},
+      {e:'📝', name:'기초생활수급자', desc:'오늘을 버티는 대한민국의 이웃들'},
+      {e:'💙', name:'당신', desc:'이 모든 걸 감당하며 살아온 사람'},
+    ]
+  },
+];
+
+// ── STATE ────────────────────────────────────────────────────────
+let current = 0;
+let scores = []; // per category
+let totalScore = 0;
+const catScores = {
+  '👶 출생환경':0,'📚 교육':0,'💰 경제':0,
+  '💼 직업':0,'🏠 주거':0,'❤️ 관계':0,'🧠 멘탈·건강':0
+};
+const catCounts = {...catScores};
+
+// ── FUNCS ────────────────────────────────────────────────────────
+function startQuiz(){
+  document.getElementById('intro').style.display='none';
+  document.getElementById('quiz').style.display='block';
+  showQuestion(0);
+}
+
+function showQuestion(idx){
+  const q = QUESTIONS[idx];
+  document.getElementById('prog-count').textContent = `${idx+1} / 30`;
+  document.getElementById('prog-fill').style.width = ((idx+1)/30*100)+'%';
+  document.getElementById('q-category').textContent = q.cat;
+  document.getElementById('q-num').textContent = `Q${idx+1}`;
+  document.getElementById('q-text').textContent = q.text;
+
+  const letters = ['A','B','C','D','E'];
+  document.getElementById('q-options').innerHTML = q.opts.map((o,i)=>`
+    <button class="opt-btn" onclick="answer(${o.s}, '${q.cat}')">
+      <span class="opt-letter">${letters[i]}</span>
+      ${o.t}
+    </button>
+  `).join('');
+}
+
+function answer(score, cat){
+  totalScore += score;
+  catScores[cat] = (catScores[cat]||0) + score;
+  catCounts[cat] = (catCounts[cat]||0) + 1;
+
+  current++;
+  if(current >= QUESTIONS.length){
+    showLoading();
+  } else {
+    showQuestion(current);
+  }
+}
+
+function showLoading(){
+  document.getElementById('quiz').style.display='none';
+  document.getElementById('loading').style.display='block';
+  setTimeout(showResult, 2000);
+}
+
+function showResult(){
+  document.getElementById('loading').style.display='none';
+  const type = TYPES.find(t=>totalScore>=t.min && totalScore<=t.max) || TYPES[TYPES.length-1];
+
+  // category breakdown
+  const cats = [
+    {key:'👶 출생환경', max:60, label:'출생환경', color:'#a78bfa'},
+    {key:'📚 교육', max:50, label:'교육', color:'#60a5fa'},
+    {key:'💰 경제', max:50, label:'경제', color:'#34d399'},
+    {key:'💼 직업', max:40, label:'직업', color:'#fbbf24'},
+    {key:'🏠 주거', max:30, label:'주거', color:'#f87171'},
+    {key:'❤️ 관계', max:40, label:'관계', color:'#f472b6'},
+    {key:'🧠 멘탈·건강', max:30, label:'멘탈/건강', color:'#94a3b8'},
+  ];
+
+  const pct = Math.round(totalScore/300*100);
+
+  const breakdownHTML = cats.map(c=>{
+    const raw = catScores[c.key]||0;
+    const p = Math.round(raw/c.max*100);
+    return `
+      <div class="bk-card">
+        <div class="bk-cat">${c.label}</div>
+        <div class="bk-score" style="color:${c.color}">${p}<span style="font-size:.6rem;color:var(--muted)">/100</span></div>
+        <div class="bk-bar" style="width:${p}%;background:${c.color}"></div>
+      </div>`;
+  }).join('');
+
+  const famousHTML = type.famous.map(f=>`
+    <div class="famous-item">
+      <span class="famous-emoji">${f.e}</span>
+      <div>
+        <div class="famous-name">${f.name}</div>
+        <div class="famous-desc">${f.desc}</div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('result').innerHTML = `
+    <div class="result-header">
+      <div class="result-badge" style="background:${type.badgeColor};color:${type.badgeText};border:1px solid ${type.badgeText}44">
+        ${type.grade}
+      </div>
+      <div style="font-size:3rem;margin-bottom:10px">${type.emoji}</div>
+      <div class="result-type-name">${type.name.replace('\n','<br>')}</div>
+      <div class="result-type-sub">${type.sub}</div>
+    </div>
+
+    <div class="diff-meter">
+      <div class="diff-label">인생 난이도 점수</div>
+      <div class="diff-score-wrap">
+        <span class="diff-score-big" style="color:${type.gradeColor}">${totalScore}</span>
+        <span class="diff-score-max"> / 300</span>
+      </div>
+      <div class="diff-bar-bg">
+        <div class="diff-bar-fill" style="width:${pct}%;background:linear-gradient(90deg,#22c55e,${type.gradeColor})"></div>
+      </div>
+      <div class="diff-grade" style="color:${type.gradeColor}">${type.grade}</div>
+    </div>
+
+    <div class="breakdown">${breakdownHTML}</div>
+
+    <div class="desc-card">
+      <h3>📋 판독 결과</h3>
+      <div class="desc-text">${type.desc}</div>
+    </div>
+
+    <div class="famous-card">
+      <h3>🙌 비슷한 유형의 인물</h3>
+      <div class="famous-list">${famousHTML}</div>
+    </div>
+
+    <button class="share-btn" onclick="copyResult('${type.name.replace('\n','')}', ${totalScore})">📋 결과 복사해서 공유하기</button>
+    <button class="retry-btn" onclick="location.reload()">↩ 다시 테스트하기</button>
+  `;
+
+  document.getElementById('result').style.display='block';
+}
+
+function copyResult(name, score){
+  const text = `🇰🇷 한국인 인생 난이도 판독기\n\n내 유형: ${name}\n난이도 점수: ${score}/300\n\n나도 해보기: [링크]`;
+  navigator.clipboard.writeText(text).then(()=>{
+    alert('결과가 복사됐습니다! 친구에게 공유해보세요 😊');
+  });
+}
+</script>
+</body>
+</html>
