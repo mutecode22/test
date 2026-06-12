@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -910,6 +910,14 @@ function showResult(){
   document.getElementById('loading').style.display='none';
   const scaledScore = Math.round(totalScore/300*100);
   const type = TYPES.find(t=>scaledScore>=t.min && scaledScore<=t.max) || TYPES[TYPES.length-1];
+  renderResult(scaledScore, type);
+}
+
+function renderResult(scaledScore, type){
+  document.getElementById('result').style.display='block';
+
+  // 공유 링크로 들어온 경우 catScores 초기화
+  const isShared = Object.values(catScores).every(v=>v===0) && scaledScore > 0;
 
   // category breakdown
   const cats = [
@@ -975,7 +983,7 @@ function showResult(){
     return (list.find(c => score <= c.max) || list[list.length-1]).msg;
   }
 
-  const breakdownHTML = cats.map(c=>{
+  const breakdownHTML = isShared ? '<div style="font-size:0.75rem;color:#71717a;text-align:center;padding:10px">카테고리별 점수는 직접 테스트해야 볼 수 있어요!</div>' : cats.map(c=>{
     const raw = catScores[c.key]||0;
     const p = Math.round(raw/c.max*100);
     return `
@@ -987,7 +995,7 @@ function showResult(){
   }).join('');
 
   // 카테고리별 코멘트 카드 (별도로 렌더링)
-  const catCommentHTML = cats.map(c=>{
+  const catCommentHTML = isShared ? '' : cats.map(c=>{
     const raw = catScores[c.key]||0;
     const p = Math.round(raw/c.max*100);
     const comment = getCatComment(c.key, p);
@@ -1052,19 +1060,42 @@ function showResult(){
       <div class="famous-list">${famousHTML}</div>
     </div>
 
-    <button class="share-btn" onclick="copyResult('${type.name.replace('\n','')}', ${scaledScore})">📋 결과 복사해서 공유하기</button>
-    <button class="retry-btn" onclick="location.reload()">↩ 다시 테스트하기</button>
+    <button class="share-btn" onclick="copyResult('${type.name.replace('\n','')}', ${scaledScore})">🔗 내 결과 링크 복사하기</button>
+    <button class="retry-btn" onclick="location.href=location.href.split('?')[0]">📝 나도 테스트하기</button>
   `;
 
-  document.getElementById('result').style.display='block';
+
 }
 
 function copyResult(name, score){
-  const text = `🇰🇷 한국인 인생 난이도 판독기\n\n내 유형: ${name}\n난이도 점수: ${score}/100\n\n나도 해보기: [링크]`;
+  const typeIdx = TYPES.findIndex(t=>score>=t.min && score<=t.max);
+  const baseUrl = window.location.href.split('?')[0];
+  const shareUrl = baseUrl + '?score=' + score + '&type=' + typeIdx;
+  const text = '🇰🇷 한국인 인생 난이도 판독기\n\n내 유형: ' + name + '\n난이도 점수: ' + score + '/100\n\n👉 내 결과 보기: ' + shareUrl;
   navigator.clipboard.writeText(text).then(()=>{
-    alert('결과가 복사됐습니다! 친구에게 공유해보세요 😊');
+    alert('결과가 복사됐습니다! 카톡에 붙여넣기 해서 공유해보세요 😊');
+  }).catch(()=>{
+    prompt('아래 링크를 복사하세요:', shareUrl);
   });
 }
+
+// 페이지 로드 시 URL 파라미터 확인해서 결과 바로 표시
+function checkSharedResult(){
+  const params = new URLSearchParams(window.location.search);
+  const score = params.get('score');
+  const typeIdx = params.get('type');
+  if(score !== null && typeIdx !== null){
+    document.getElementById('intro').style.display='none';
+    const scaledScore = parseInt(score);
+    const type = TYPES[parseInt(typeIdx)] || TYPES[TYPES.length-1];
+    renderResult(scaledScore, type);
+  }
+}
+checkSharedResult();
+</script>
+</body>
+</html>
+
 </script>
 </body>
 </html>
